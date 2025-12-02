@@ -60,9 +60,17 @@ module Rpush
             Rpush.logger.warn("Database reconnected")
           end
 
+          # Override the original reconnect_database method that uses deprecated methods
+          # Original uses: ::ActiveRecord::Base.clear_all_connections! and ::ActiveRecord::Base.establish_connection
+          # which were removed in Rails 7.2
           def reconnect_database
-            ::ActiveRecord::Base.clear_all_connections!
-            ::ActiveRecord::Base.establish_connection
+            # Clear all connections using the modern approach
+            ::ActiveRecord::Base.connection_handler.clear_all_connections!
+
+            # Re-establish connection using the connection pool
+            ::ActiveRecord::Base.connection_handler.establish_connection(
+              ::ActiveRecord::Base.connection_db_config
+            )
           end
 
           def check_database_is_connected
